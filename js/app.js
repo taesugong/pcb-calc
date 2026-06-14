@@ -188,9 +188,12 @@ function renderInputPanel() {
       </div>
       <div class="field-inputs">
         <input type="range" id="slider-${field.key}" class="field-slider"
-          min="${dMin}" max="${dMax}" step="${dStep}" value="${dCur}">
+          min="${dMin}" max="${dMax}" step="${dStep}" value="${dCur}"
+          aria-label="${field.desc}">
         <input type="number" id="num-${field.key}" class="field-num"
-          min="${dMin}" max="${dMax}" step="${dStep}" value="${fmt(dCur, field.hasDim)}">
+          min="${dMin}" max="${dMax}" step="${dStep}" value="${fmt(dCur, field.hasDim)}"
+          aria-label="${field.desc} 숫자 입력">
+        <span class="field-unit-tag" aria-hidden="true">${field.hasDim ? state.unit : ''}</span>
       </div>
     `;
 
