@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PCB 임피던스 계산기 — 공식 검증</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 14px;
+      padding: 28px;
+      background: #f8f9fa;
+      color: #212529;
+      max-width: 860px;
+    }
+    h1 { font-size: 18px; margin-bottom: 6px; }
+    .subtitle { color: #5c6370; font-size: 13px; margin-bottom: 24px; }
+    table { border-collapse: collapse; width: 100%; font-size: 13px; margin-bottom: 16px; }
+    th { background: #e9ecef; text-align: left; padding: 8px 12px; border: 1px solid #ced4da; font-weight: 600; }
+    td { padding: 7px 12px; border: 1px solid #ced4da; font-family: 'Courier New', monospace; }
+    .pass { color: #1a7d38; font-weight: 700; }
+    .fail { color: #b85c15; font-weight: 700; }
+    .z0  { font-size: 15px; font-weight: 700; color: #1a73e8; }
+    .note-box {
+      background: #fff;
+      border: 1px solid #ced4da;
+      border-left: 4px solid #1a73e8;
+      border-radius: 6px;
+      padding: 12px 16px;
+      margin-bottom: 12px;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+    .note-box.warn { border-left-color: #b85c15; }
+    code { background: #e9ecef; padding: 1px 4px; border-radius: 3px; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <h1>PCB 임피던스 계산기 — 공식 검증 테스트</h1>
+  <p class="subtitle">
+    개발자 도구(F12) → Console 탭에서도 상세 결과를 확인할 수 있습니다.
+    ⚠ ES module 사용 — 반드시 로컬 서버를 통해 열어야 합니다
+    (<code>python -m http.server 8080</code> 후 <code>localhost:8080/test.html</code>).
+  </p>
+
+  <div id="output"><p>계산 중...</p></div>
+
+  <script type="module">
+    import { calcMicrostrip, calcStripline } from './js/formulas.js';
+
+    // ── 테스트 케이스 정의 ────────────────────────────────
+    const CASES = [
+      {
+        id: 'MS1',
+        label: 'Microstrip #1',
+        input: 'W=10, H=5, T=1.4, εr=4.3',
+        run: () => calcMicrostrip({ W: 10, H: 5,  T: 1.4, er: 4.3 }),
+      },
+      {
+        id: 'MS2',
+        label: 'Microstrip #2  (W/H=2.0, T 고정)',
+        input: 'W=20, H=10, T=1.4, εr=4.3',
+        run: () => calcMicrostrip({ W: 20, H: 10, T: 1.4, er: 4.3 }),
+      },
+      {
+        id: 'SL1',
+        label: 'Stripline #1',
+        input: 'W=8, B=20, T=1.4, εr=4.3',
+        run: () => calcStripline({ W: 8,  B: 20, T: 1.4, er: 4.3 }),
+      },
+    ];
+
+    // ── 실행 및 console.log 출력 ──────────────────────────
+    const results = CASES.map(({ id, label, input, run }) => {
+      const r = run();
+      console.log(`[${id}] ${label}`);
+      console.log(`  입력       : ${input}`);
+      console.log(`  Z0         = ${r.Z0.toFixed(3)} Ω`);
+      console.log(`  εeff       = ${r.eEff.toFixed(4)}`);
+      console.log(`  tpd        = ${r.tpd.toFixed(2)} ps/inch`);
+      console.log(`  유효범위   : ${r.isValidRange ? '✓ 정상' : '✗ 범위 초과'}`);
+      console.log(`  공식       : ${r.formulaName}`);
+      console.log('');
+      return { id, label, input, ...r };
+    });
+
+    // ── 일관성 체크 ───────────────────────────────────────
+    const ms1 = results[0];
+    const ms2 = results[1];
+    const deltaZ0   = Math.abs(ms1.Z0   - ms2.Z0).toFixed(4);
+    const deltaEEff = Math.abs(ms1.eEff - ms2.eEff).toFixed(8);
+
+    console.log('── 일관성 체크 (MS1 vs MS2) ─────────────────────');
+    console.log(`  εeff 동일 여부 : delta = ${deltaEEff} → ${parseFloat(deltaEEff) < 1e-6 ? '✓ 동일' : '✗ 다름'}`);
+    console.log(`  Z0   동일 여부 : delta = ${deltaZ0} Ω`);
+    console.log(`  → Z0가 다름 (${deltaZ0} Ω) — T=1.4mil 고정 시 기하 비례 불변이 성립하지 않음.`);
+    console.log(`    W, H만 2배 시: 분자 2×(5.98H), 분모 2×(0.8W)+1.4 (T 미변화)`);
+    console.log(`    → 비율이 달라져 Z0 증가. 물리적으로 올바른 동작.`);
+    console.log('');
+    console.log('── Stripline 유효범위 확인 ──────────────────────');
+    const sl = results[2];
+    console.log(`  W/B = 8/20 = 0.40 > 0.35 → isValidRange = ${sl.isValidRange} (범위 초과 — 참고용만)`);
+
+    // ── 페이지 렌더링 ─────────────────────────────────────
+    const rows = results.map(r => `
+      <tr>
+        <td>${r.id}</td>
+        <td>${r.label}</td>
+        <td><code>${r.input}</code></td>
+        <td class="z0">${r.Z0.toFixed(2)} Ω</td>
+        <td>${r.eEff.toFixed(4)}</td>
+        <td>${r.tpd.toFixed(1)} ps/in</td>
+        <td class="${r.isValidRange ? 'pass' : 'fail'}">${r.isValidRange ? '✓ 정상' : '✗ 범위 초과'}</td>
+      </tr>`).join('');
+
+    document.getElementById('output').innerHTML = `
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>케이스</th>
+            <th>입력값</th>
+            <th>Z₀</th>
+            <th>εeff</th>
+            <th>tpd</th>
+            <th>유효범위</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+
+      <div class="note-box">
+        <strong>📌 MS#1 vs MS#2 일관성 분석</strong><br>
+        W/H 비율이 동일(2.0)하므로 <strong>εeff = ${ms1.eEff.toFixed(4)} 로 동일</strong> ✓<br>
+        그러나 Z₀는 ${ms1.Z0.toFixed(2)} Ω vs ${ms2.Z0.toFixed(2)} Ω (차이 ${deltaZ0} Ω).<br>
+        원인: T = 1.4 mil 고정 → W, H가 2배여도 <code>0.8×W + T</code> 분모에서 T가 비례하지 않음.
+        <br>이는 IPC-2141A 공식의 <strong>정확한 물리적 동작</strong>이며, 버그가 아닙니다.
+      </div>
+
+      <div class="note-box warn">
+        <strong>📌 Stripline #1 유효범위 초과</strong><br>
+        W/B = 8/20 = 0.40 &gt; 0.35 (IPC-2141A 적용 한계) → <code>isValidRange: false</code><br>
+        Z₀ = ${results[2].Z0.toFixed(2)} Ω 는 참고용으로만 사용하세요.
+        실제 설계 시 필드 솔버 검증 권장.
+      </div>
+    `;
+  </script>
+</body>
+</html>
