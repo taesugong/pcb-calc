@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>iframe 테스트 페이지</title>
+<style>
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    margin: 0;
+    padding: 16px;
+    box-sizing: border-box;
+  }
+  #js-test-box {
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    text-align: center;
+    font-weight: bold;
+  }
+  .row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  input[type="number"] {
+    padding: 6px 10px;
+    font-size: 16px;
+    width: 100px;
+  }
+  #result {
+    font-size: 20px;
+    font-weight: bold;
+    color: #1a73e8;
+  }
+</style>
+</head>
+<body>
+  <div id="js-test-box">스크립트 실행 전</div>
+
+  <div class="row">
+    <label for="num-input">숫자 입력:</label>
+    <input type="number" id="num-input" value="5">
+  </div>
+  <p>입력값 × 2 = <span id="result">-</span></p>
+
+  <script>
+    // 1) JS 실행 확인
+    const box = document.getElementById('js-test-box');
+    box.innerText = '✅ iframe 안에서 JS 정상 실행됨';
+    box.style.background = '#d4f7d4';
+
+    // 2) 인터랙션(이벤트) 확인
+    const input = document.getElementById('num-input');
+    const result = document.getElementById('result');
+    function update() {
+      result.innerText = (Number(input.value) * 2);
+    }
+    input.addEventListener('input', update);
+    update();
+  </script>
+</body>
+</html>
