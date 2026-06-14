@@ -1,65 +1,50 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>iframe 테스트 페이지</title>
-<style>
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    margin: 0;
-    padding: 16px;
-    box-sizing: border-box;
-  }
-  #js-test-box {
-    padding: 12px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    margin-bottom: 16px;
-    text-align: center;
-    font-weight: bold;
-  }
-  .row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 8px;
-  }
-  input[type="number"] {
-    padding: 6px 10px;
-    font-size: 16px;
-    width: 100px;
-  }
-  #result {
-    font-size: 20px;
-    font-weight: bold;
-    color: #1a73e8;
-  }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PCB 임피던스 계산기</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div id="js-test-box">스크립트 실행 전</div>
+  <div class="app-wrapper">
 
-  <div class="row">
-    <label for="num-input">숫자 입력:</label>
-    <input type="number" id="num-input" value="5">
+    <header class="app-header">
+      <h1 class="app-title">PCB 임피던스 계산기</h1>
+    </header>
+
+    <nav class="tab-bar" role="tablist" aria-label="전송선로 구조 선택">
+      <button class="tab-btn active" role="tab" aria-selected="true"  data-type="microstrip">Microstrip</button>
+      <button class="tab-btn"        role="tab" aria-selected="false" data-type="stripline">Stripline</button>
+      <button class="tab-btn disabled" role="tab" aria-selected="false" aria-disabled="true" disabled data-type="cpwg">
+        CPWG <span class="badge-soon">추후 지원</span>
+      </button>
+      <button class="tab-btn disabled" role="tab" aria-selected="false" aria-disabled="true" disabled data-type="cpw">
+        CPW <span class="badge-soon">추후 지원</span>
+      </button>
+      <button class="tab-btn disabled" role="tab" aria-selected="false" aria-disabled="true" disabled data-type="cps">
+        CPS <span class="badge-soon">추후 지원</span>
+      </button>
+    </nav>
+
+    <main class="main-grid">
+
+      <section id="input-panel" class="panel" aria-label="입력 영역">
+        <p class="panel-placeholder">입력 영역 (placeholder)</p>
+      </section>
+
+      <section id="cross-section" class="panel" aria-label="단면도 시각화">
+        <p class="panel-placeholder">단면도 시각화 (placeholder)</p>
+      </section>
+
+      <section id="result-panel" class="panel" aria-label="계산 결과">
+        <p class="panel-placeholder">결과 영역 (placeholder)</p>
+      </section>
+
+    </main>
+
   </div>
-  <p>입력값 × 2 = <span id="result">-</span></p>
 
-  <script>
-    // 1) JS 실행 확인
-    const box = document.getElementById('js-test-box');
-    box.innerText = '✅ iframe 안에서 JS 정상 실행됨';
-    box.style.background = '#d4f7d4';
-
-    // 2) 인터랙션(이벤트) 확인
-    const input = document.getElementById('num-input');
-    const result = document.getElementById('result');
-    function update() {
-      result.innerText = (Number(input.value) * 2);
-    }
-    input.addEventListener('input', update);
-    update();
-  </script>
+  <script src="js/app.js"></script>
 </body>
 </html>

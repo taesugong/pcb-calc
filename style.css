@@ -1,0 +1,188 @@
+/* ── CSS 변수 (라이트 모드 기본값) ── */
+:root {
+  --bg-color:        transparent;
+  --surface-color:   #f8f9fa;
+  --border-color:    #dee2e6;
+  --text-color:      #212529;
+  --text-muted:      #6c757d;
+  --accent-color:    #1a73e8;
+  --accent-hover:    #1557b0;
+  --tab-bg:          #e9ecef;
+  --tab-active-bg:   #ffffff;
+  --tab-active-text: var(--accent-color);
+  --badge-bg:        #adb5bd;
+  --badge-text:      #ffffff;
+  --placeholder-bg:  #f1f3f5;
+  --placeholder-text:#adb5bd;
+  --shadow:          0 1px 4px rgba(0, 0, 0, 0.08);
+  --radius:          8px;
+  --gap:             12px;
+}
+
+/* ── 다크 모드 오버라이드 ── */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --surface-color:   #1e1e2e;
+    --border-color:    #313244;
+    --text-color:      #cdd6f4;
+    --text-muted:      #6c7086;
+    --accent-color:    #89b4fa;
+    --accent-hover:    #b4d0fb;
+    --tab-bg:          #181825;
+    --tab-active-bg:   #1e1e2e;
+    --tab-active-text: #89b4fa;
+    --badge-bg:        #45475a;
+    --badge-text:      #cdd6f4;
+    --placeholder-bg:  #181825;
+    --placeholder-text:#45475a;
+    --shadow:          0 1px 4px rgba(0, 0, 0, 0.4);
+  }
+}
+
+/* ── 리셋 & 기초 ── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--bg-color);
+  color: var(--text-color);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR",
+               "Apple SD Gothic Neo", sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* ── 전체 래퍼 ── */
+.app-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+  padding: 16px;
+  min-height: 100vh;
+}
+
+/* ── 헤더 ── */
+.app-header {
+  padding: 4px 0 8px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.app-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-color);
+  letter-spacing: -0.3px;
+}
+
+/* ── 탭 바 ── */
+.tab-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  background: var(--tab-bg);
+  color: var(--text-muted);
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+
+.tab-btn:hover:not(.disabled) {
+  background: var(--tab-active-bg);
+  color: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+.tab-btn.active {
+  background: var(--tab-active-bg);
+  color: var(--tab-active-text);
+  border-color: var(--accent-color);
+  font-weight: 600;
+  box-shadow: var(--shadow);
+}
+
+.tab-btn.disabled,
+.tab-btn[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.badge-soon {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 5px;
+  border-radius: 10px;
+  background: var(--badge-bg);
+  color: var(--badge-text);
+  letter-spacing: 0.2px;
+}
+
+/* ── 메인 그리드 (데스크톱: 3열) ── */
+.main-grid {
+  display: grid;
+  grid-template-columns: 260px 1fr 240px;
+  grid-template-rows: auto;
+  gap: var(--gap);
+  flex: 1;
+}
+
+/* ── 공통 패널 ── */
+.panel {
+  background: var(--surface-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 16px;
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 단면도 패널은 약간 더 높게 */
+#cross-section {
+  min-height: 280px;
+}
+
+/* placeholder 안내 텍스트 */
+.panel-placeholder {
+  color: var(--placeholder-text);
+  font-size: 13px;
+  text-align: center;
+  user-select: none;
+}
+
+/* ── 반응형: 768px 이하 → 세로 스택 ── */
+@media (max-width: 768px) {
+  .main-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* 모바일에서 순서: 단면도 → 입력 → 결과 */
+  #cross-section { order: 1; }
+  #input-panel   { order: 2; }
+  #result-panel  { order: 3; }
+
+  .tab-bar {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 4px;
+    /* 스크롤바 숨기기 */
+    scrollbar-width: none;
+  }
+  .tab-bar::-webkit-scrollbar { display: none; }
+}
