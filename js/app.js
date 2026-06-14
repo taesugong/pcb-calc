@@ -1,4 +1,5 @@
 import { calcMicrostrip, calcStripline, milToMm, mmToMil } from './formulas.js';
+import { drawMicrostrip, drawStripline } from './crosssection.js';
 
 // ── 상태 ──────────────────────────────────────────────────
 const state = {
@@ -55,6 +56,26 @@ function unitSuffix(hasDim) {
   return hasDim ? ` ${state.unit}` : '';
 }
 
+// ── SVG 참조 (초기화 시 한 번 생성) ──────────────────────
+let crossSVG = null;
+
+function initCrossSection() {
+  const panel = document.getElementById('cross-section');
+  panel.innerHTML = '';
+  crossSVG = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  panel.appendChild(crossSVG);
+}
+
+function updateCrossSection() {
+  if (!crossSVG) return;
+  const v = state.vals[state.type];
+  if (state.type === 'microstrip') {
+    drawMicrostrip(crossSVG, v);
+  } else {
+    drawStripline(crossSVG, v);
+  }
+}
+
 // ── 계산 ─────────────────────────────────────────────────
 
 function calculate() {
@@ -63,6 +84,7 @@ function calculate() {
     ? calcMicrostrip(v)
     : calcStripline(v);
   renderResult(result);
+  updateCrossSection();
 }
 
 // ── 결과 렌더링 ───────────────────────────────────────────
@@ -192,5 +214,6 @@ function initTabs() {
 // ── 진입점 ───────────────────────────────────────────────
 
 initTabs();
+initCrossSection();
 renderInputPanel();
 calculate();
