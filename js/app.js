@@ -91,27 +91,56 @@ function calculate() {
 
 function renderResult(r) {
   const panel = document.getElementById('result-panel');
-  const warning = r.isValidRange ? '' : `
-    <p class="range-warning">⚠ 입력값이 공식의 유효 범위를 벗어났습니다</p>`;
+  panel.classList.toggle('result-panel--warn', !r.isValidRange);
+
+  const structName = state.type === 'microstrip' ? 'Microstrip' : 'Symmetric Stripline';
+  const copyText = `Z0 = ${r.Z0.toFixed(1)} Ω (εeff=${r.eEff.toFixed(2)}, ${structName}, IPC-2141A)`;
+
+  const warningBadge = r.isValidRange ? '' : `
+    <div class="result-warning" role="alert">
+      <span class="result-warning-icon">⚠</span>
+      <span>입력값이 유효 범위를 벗어났습니다 — 참고용으로만 사용하세요</span>
+    </div>`;
 
   panel.innerHTML = `
     <div class="result-content">
-      ${warning}
-      <p class="result-formula">${r.formulaName}</p>
-      <div class="result-row">
-        <span class="result-label">특성 임피던스 Z₀</span>
-        <span class="result-val">${r.Z0.toFixed(2)} Ω</span>
+      ${warningBadge}
+      <div class="result-z0-block">
+        <div class="result-z0-label">특성 임피던스 Z₀</div>
+        <div class="result-z0-value">${r.Z0.toFixed(1)}<span class="result-z0-unit"> Ω</span></div>
       </div>
-      <div class="result-row">
-        <span class="result-label">실효 유전율 εeff</span>
-        <span class="result-val">${r.eEff.toFixed(3)}</span>
+      <div class="result-secondary">
+        <div class="result-item">
+          <span class="result-item-label">εeff</span>
+          <span class="result-item-value">${r.eEff.toFixed(3)}</span>
+        </div>
+        <div class="result-item">
+          <span class="result-item-label">tpd</span>
+          <span class="result-item-value">${r.tpd.toFixed(1)}<span class="result-item-unit"> ps/in</span></span>
+        </div>
       </div>
-      <div class="result-row">
-        <span class="result-label">전파 지연 tpd</span>
-        <span class="result-val">${r.tpd.toFixed(1)} ps/in</span>
-      </div>
+      <div class="result-formula-name">${r.formulaName}</div>
+      <button class="result-copy-btn" data-copy="${copyText}">결과 복사</button>
     </div>
   `;
+}
+
+// ── 클립보드 복사 (이벤트 위임) ──────────────────────────
+
+function initResultPanel() {
+  document.getElementById('result-panel').addEventListener('click', (ev) => {
+    const btn = ev.target.closest('.result-copy-btn');
+    if (!btn) return;
+    navigator.clipboard.writeText(btn.dataset.copy).then(() => {
+      const orig = btn.textContent;
+      btn.textContent = '복사됨!';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = orig;
+        btn.classList.remove('copied');
+      }, 1500);
+    });
+  });
 }
 
 // ── 입력 패널 렌더링 ──────────────────────────────────────
@@ -215,5 +244,6 @@ function initTabs() {
 
 initTabs();
 initCrossSection();
+initResultPanel();
 renderInputPanel();
 calculate();

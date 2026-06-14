@@ -17,6 +17,14 @@
   --shadow:          0 1px 4px rgba(0, 0, 0, 0.08);
   --radius:          8px;
   --gap:             12px;
+  /* 경고 색 */
+  --warn-bg:         rgba(192, 101, 26, 0.08);
+  --warn-border:     rgba(192, 101, 26, 0.28);
+  --warn-text:       #b85c15;
+  /* 성공(복사됨) 색 */
+  --success-bg:      rgba(40, 167, 69, 0.08);
+  --success-border:  rgba(40, 167, 69, 0.30);
+  --success-text:    #1a7d38;
 }
 
 /* ── 다크 모드 오버라이드 ── */
@@ -36,6 +44,12 @@
     --placeholder-bg:  #181825;
     --placeholder-text:#45475a;
     --shadow:          0 1px 4px rgba(0, 0, 0, 0.4);
+    --warn-bg:         rgba(244, 162, 97, 0.10);
+    --warn-border:     rgba(244, 162, 97, 0.28);
+    --warn-text:       #f4a261;
+    --success-bg:      rgba(166, 227, 161, 0.10);
+    --success-border:  rgba(166, 227, 161, 0.30);
+    --success-text:    #a6e3a1;
   }
 }
 
@@ -297,58 +311,154 @@ body {
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-color) 20%, transparent);
 }
 
-/* ── 결과 패널 ── */
-.result-content {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  width: 100%;
+/* ── 결과 패널 — 경고 상태 ── */
+.result-panel--warn {
+  border-color: var(--warn-border);
 }
 
-.result-formula {
+/* ── 결과 패널 — 경고 배지 ── */
+.result-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  padding: 8px 10px;
+  background: var(--warn-bg);
+  border: 1px solid var(--warn-border);
+  border-radius: 6px;
   font-size: 11px;
-  color: var(--text-muted);
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--border-color);
+  line-height: 1.5;
+  color: var(--warn-text);
 }
 
-.result-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 8px;
-}
-
-.result-label {
-  font-size: 12px;
-  color: var(--text-muted);
-  white-space: nowrap;
-}
-
-.result-val {
-  font-size: 16px;
-  font-weight: 700;
-  font-family: 'Courier New', 'Consolas', monospace;
-  color: var(--accent-color);
-  white-space: nowrap;
-}
-
-.range-warning {
-  font-size: 12px;
-  color: #c0651a;
-  background: rgba(192, 101, 26, 0.08);
-  border: 1px solid rgba(192, 101, 26, 0.25);
-  border-radius: 4px;
-  padding: 7px 10px;
+.result-warning-icon {
+  flex-shrink: 0;
+  font-size: 14px;
   line-height: 1.4;
 }
 
-@media (prefers-color-scheme: dark) {
-  .range-warning {
-    color: #f4a261;
-    background: rgba(244, 162, 97, 0.08);
-    border-color: rgba(244, 162, 97, 0.25);
-  }
+/* ── 결과 패널 — Z₀ 메인 표시 ── */
+.result-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+}
+
+.result-z0-block {
+  text-align: center;
+  padding: 10px 0 6px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.result-z0-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  margin-bottom: 6px;
+}
+
+.result-z0-value {
+  font-size: 40px;
+  font-weight: 800;
+  font-family: 'Courier New', Consolas, monospace;
+  color: var(--accent-color);
+  line-height: 1;
+  letter-spacing: -1.5px;
+}
+
+.result-z0-unit {
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+/* ── 결과 패널 — 보조 값 (εeff, tpd) ── */
+.result-secondary {
+  display: flex;
+  gap: 8px;
+}
+
+.result-item {
+  flex: 1;
+  background: var(--tab-bg);
+  border-radius: 6px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.result-item-label {
+  font-size: 10px;
+  font-family: 'Courier New', Consolas, monospace;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.result-item-value {
+  font-size: 14px;
+  font-weight: 700;
+  font-family: 'Courier New', Consolas, monospace;
+  color: var(--text-color);
+}
+
+.result-item-unit {
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+/* ── 결과 패널 — 공식명 ── */
+.result-formula-name {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 2px 0;
+  opacity: 0.8;
+}
+
+/* ── 결과 패널 — 복사 버튼 ── */
+.result-copy-btn {
+  width: 100%;
+  padding: 8px;
+  margin-top: auto;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--tab-bg);
+  color: var(--text-muted);
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.13s, color 0.13s, border-color 0.13s;
+}
+
+.result-copy-btn:hover {
+  background: var(--tab-active-bg);
+  color: var(--accent-color);
+  border-color: var(--accent-color);
+}
+
+.result-copy-btn.copied {
+  background: var(--success-bg);
+  color: var(--success-text);
+  border-color: var(--success-border);
+  font-weight: 600;
+}
+
+/* ── 푸터 면책 문구 ── */
+.app-footer {
+  padding: 10px 0 2px;
+  border-top: 1px solid var(--border-color);
+}
+
+.app-footer p {
+  font-size: 10px;
+  color: var(--text-muted);
+  line-height: 1.7;
+  opacity: 0.65;
 }
 
 /* ── 반응형: 768px 이하 → 세로 스택 ── */
