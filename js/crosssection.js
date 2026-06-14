@@ -3,13 +3,30 @@ const SVG_NS = 'http://www.w3.org/2000/svg';
 // ── ViewBox / 레이아웃 상수 ───────────────────────────────
 const VB_W = 420;
 const VB_H = 260;
-const LX   = 72;                   // 그림 왼쪽 경계 (H/B 라벨 공간)
-const RX   = 372;                  // 그림 오른쪽 경계
-const BY   = 240;                  // GND 하단 y
-const CX   = (LX + RX) / 2;       // 222, 수평 중심
-const GND_H      = 20;             // GND 플레인 시각적 높이 (고정 px)
-const DIEL_H_MAX = 130;            // 유전체 최대 시각적 높이 (px)
-const MAX_W_PX   = (RX - LX) * 0.70; // 트레이스 최대 너비 (≈210 px)
+const LX   = 72;                      // 그림 왼쪽 경계 (H/B 라벨 공간)
+const RX   = 372;                      // 그림 오른쪽 경계
+const BY   = 240;                      // GND 하단 y
+const CX   = (LX + RX) / 2;           // 222, 수평 중심
+const GND_H      = 20;                 // GND 플레인 고정 높이 (px)
+const DIEL_H_MAX = 130;                // 유전체에 할당된 최대 시각 높이 (px)
+const MAX_W_PX   = (RX - LX) * 0.70;  // 트레이스 최대 너비 (≈210 px)
+
+// ── 고정 스케일 (FIELDS 슬라이더 max와 일치해야 함) ──────
+// 현재 입력값이 아닌 슬라이더 전체 범위를 기준으로 삼아
+// 가로/세로 축이 서로 영향을 주지 않도록 분리한다.
+const W_MAX = 50;    // mil — Microstrip · Stripline 공통
+const H_MAX = 50;    // mil — Microstrip H
+const B_MAX = 100;   // mil — Stripline B
+const T_MAX = 3;     // mil — 공통
+
+// 가로 scale: MAX_W_PX / W_MAX  (≈ 4.2 px/mil)
+const SCALE_X = MAX_W_PX / W_MAX;
+
+// 세로 scale — Microstrip: DIEL_H_MAX / (H_MAX + T_MAX)  (≈ 2.45 px/mil)
+const SCALE_Y_MS = DIEL_H_MAX / (H_MAX + T_MAX);
+
+// 세로 scale — Stripline: DIEL_H_MAX / B_MAX  (T는 B 내부에 포함)  (= 1.3 px/mil)
+const SCALE_Y_SL = DIEL_H_MAX / B_MAX;
 
 // ── SVG 요소 생성 헬퍼 ────────────────────────────────────
 
@@ -51,7 +68,6 @@ function initSVG(svg) {
 function addDefs(svg, c) {
   const defs = e('defs');
 
-  // GND 대각선 해칭
   const pat = e('pattern', {
     id: 'gnd-hatch', patternUnits: 'userSpaceOnUse', width: 8, height: 8,
   });
@@ -60,7 +76,6 @@ function addDefs(svg, c) {
   }));
   defs.appendChild(pat);
 
-  // → 전방 화살촉 (marker-end용)
   const mFwd = e('marker', {
     id: 'dim-fwd', markerWidth: 8, markerHeight: 6,
     refX: 7, refY: 3, orient: 'auto',
@@ -68,7 +83,6 @@ function addDefs(svg, c) {
   mFwd.appendChild(e('path', { d: 'M0,0 L8,3 L0,6 Z', fill: c.dim }));
   defs.appendChild(mFwd);
 
-  // ← 후방 화살촉 (marker-start용)
   const mBwd = e('marker', {
     id: 'dim-bwd', markerWidth: 8, markerHeight: 6,
     refX: 1, refY: 3, orient: 'auto',
@@ -131,9 +145,8 @@ function drawSubLabel(svg, x, y, c) {
 
 // ── 치수선 ────────────────────────────────────────────────
 
-// 수평 치수선: x1↔x2, 높이 y, 라벨 위쪽
 function dimH(svg, x1, x2, y, label, c) {
-  const T = 6; // 단부 틱 크기
+  const T = 6;
   svg.appendChild(e('line', { x1, y1: y - T, x2: x1, y2: y + T, stroke: c.dim, 'stroke-width': 1 }));
   svg.appendChild(e('line', { x1: x2, y1: y - T, x2, y2: y + T, stroke: c.dim, 'stroke-width': 1 }));
   svg.appendChild(e('line', {
@@ -151,7 +164,6 @@ function dimH(svg, x1, x2, y, label, c) {
   svg.appendChild(t);
 }
 
-// 수직 치수선: y1↔y2, x 위치, 라벨은 side('left'|'right')에 배치
 function dimV(svg, x, y1, y2, label, c, side = 'left') {
   const T = 6;
   svg.appendChild(e('line', { x1: x - T, y1, x2: x + T, y2: y1, stroke: c.dim, 'stroke-width': 1 }));
@@ -161,7 +173,7 @@ function dimV(svg, x, y1, y2, label, c, side = 'left') {
     stroke: c.dim, 'stroke-width': 1.3,
     'marker-start': 'url(#dim-bwd)', 'marker-end': 'url(#dim-fwd)',
   }));
-  const midY = (y1 + y2) / 2;
+  const midY   = (y1 + y2) / 2;
   const lx     = side === 'left' ? x - 9 : x + 9;
   const anchor = side === 'left' ? 'end'  : 'start';
   const t = e('text', {
@@ -174,7 +186,7 @@ function dimV(svg, x, y1, y2, label, c, side = 'left') {
   svg.appendChild(t);
 }
 
-// T가 너무 얇아 치수선을 그리기 어려울 때 사용하는 리더 라벨
+// T가 너무 얇아 수직 치수선을 그리기 어려울 때 사용하는 리더 라벨
 function thinLeader(svg, fromX, atY, toX, label, c) {
   svg.appendChild(e('line', {
     x1: fromX, y1: atY, x2: toX - 2, y2: atY,
@@ -191,22 +203,6 @@ function thinLeader(svg, fromX, atY, toX, label, c) {
   svg.appendChild(t);
 }
 
-// ── 스케일 계산 ───────────────────────────────────────────
-//
-// mainDim(H 또는 B) → DIEL_H_MAX px 기준.
-// traceDim(W)이 MAX_W_PX를 넘으면 전체를 축소.
-// T가 매우 클 경우도 고려해 추가 축소.
-
-function calcScale(mainDim, traceDim, thickness) {
-  let sc = DIEL_H_MAX / mainDim;
-  if (traceDim * sc > MAX_W_PX)           sc = MAX_W_PX / traceDim;
-  // T가 유전체 높이의 55% 이상 되지 않도록
-  if (thickness * sc > mainDim * sc * 0.55) sc = (mainDim * 0.55) / thickness * sc;
-  // 재확인: W 여전히 OK?
-  if (traceDim * sc > MAX_W_PX)           sc = MAX_W_PX / traceDim;
-  return sc;
-}
-
 // ── 공개 API ──────────────────────────────────────────────
 
 /**
@@ -216,42 +212,35 @@ function calcScale(mainDim, traceDim, thickness) {
  */
 export function drawMicrostrip(svgElement, { W, H, T }) {
   initSVG(svgElement);
-  const c  = palette();
+  const c = palette();
   addDefs(svgElement, c);
 
-  const sc   = calcScale(H, W, T);
-  const H_px = H * sc;
-  const T_px = Math.max(T * sc, 8);
-  const W_px = Math.max(W * sc, 30);
+  // 가로(W)와 세로(H, T)는 독립 스케일 — 한 축을 바꿔도 다른 축 크기가 변하지 않는다
+  const W_px = Math.max(W * SCALE_X,    8);  // 시각적 최소 너비 보장
+  const H_px = H * SCALE_Y_MS;
+  const T_px = Math.max(T * SCALE_Y_MS, 4);  // 시각적 최소 두께 보장
 
   const yGndBot  = BY;
-  const yGndTop  = yGndBot - GND_H;       // 하단 GND 상단 = 유전체 하단
-  const yDielTop = yGndTop - H_px;        // 유전체 상단  = 트레이스 하단
+  const yGndTop  = yGndBot - GND_H;
+  const yDielTop = yGndTop - H_px;
   const yTracBot = yDielTop;
   const yTracTop = yTracBot - T_px;
   const tx1 = CX - W_px / 2;
   const tx2 = CX + W_px / 2;
 
-  // 레이어 (아래 → 위 순)
   drawGND(svgElement, LX, yGndTop, RX - LX, GND_H, c);
   drawDielectric(svgElement, LX, yDielTop, RX - LX, H_px, c);
   drawCopper(svgElement, tx1, yTracTop, W_px, T_px, c);
 
-  // 유전체 라벨
   if (H_px > 26) drawSubLabel(svgElement, CX, yDielTop + H_px / 2, c);
 
-  // ── 치수선 ──
-
-  // W: 트레이스 위 수평선
   const yW = Math.max(yTracTop - 14, 12);
   dimH(svgElement, tx1, tx2, yW, 'W', c);
 
-  // H: 왼쪽 수직선 (유전체 구간)
   dimV(svgElement, LX - 22, yDielTop, yGndTop, 'H', c, 'left');
 
-  // T: 트레이스 오른쪽 수직선
   const xT = Math.min(tx2 + 22, RX - 6);
-  if (T_px >= 14) {
+  if (T_px >= 10) {
     dimV(svgElement, xT, yTracTop, yTracBot, 'T', c, 'right');
   } else {
     thinLeader(svgElement, tx2 + 3, (yTracTop + yTracBot) / 2, xT, 'T', c);
@@ -265,48 +254,41 @@ export function drawMicrostrip(svgElement, { W, H, T }) {
  */
 export function drawStripline(svgElement, { W, B, T }) {
   initSVG(svgElement);
-  const c  = palette();
+  const c = palette();
   addDefs(svgElement, c);
 
-  const sc   = calcScale(B, W, T);
-  const B_px = B * sc;
-  const T_px = Math.max(T * sc, 8);
-  const W_px = Math.max(W * sc, 30);
+  // 가로(W)와 세로(B, T)는 독립 스케일 — 한 축을 바꿔도 다른 축 크기가 변하지 않는다
+  const W_px = Math.max(W * SCALE_X,    8);
+  const B_px = B * SCALE_Y_SL;
+  const T_px = Math.max(T * SCALE_Y_SL, 4);
 
   const yBotGndBot = BY;
   const yBotGndTop = yBotGndBot - GND_H;
   const yTopGndBot = yBotGndTop - B_px;
   const yTopGndTop = yTopGndBot - GND_H;
-  const yMid       = (yBotGndTop + yTopGndBot) / 2;  // 트레이스 중심
+  const yMid       = (yBotGndTop + yTopGndBot) / 2;
   const yTracTop   = yMid - T_px / 2;
   const yTracBot   = yMid + T_px / 2;
   const tx1 = CX - W_px / 2;
   const tx2 = CX + W_px / 2;
 
-  // 레이어
   drawGND(svgElement, LX, yTopGndTop, RX - LX, GND_H, c);
   drawDielectric(svgElement, LX, yTopGndBot, RX - LX, B_px, c);
   drawCopper(svgElement, tx1, yTracTop, W_px, T_px, c);
   drawGND(svgElement, LX, yBotGndTop, RX - LX, GND_H, c);
 
-  // 유전체 라벨 (트레이스와 겹치지 않는 위치)
   if (B_px > 40) {
     const lblY = yTopGndBot + (yTracTop - yTopGndBot) / 2;
     if (yTracTop - yTopGndBot > 16) drawSubLabel(svgElement, CX, lblY, c);
   }
 
-  // ── 치수선 ──
-
-  // W: 트레이스 위 수평선 (상단 GND와 겹치지 않도록 클램프)
   const yW = Math.max(yTracTop - 14, yTopGndBot + 10);
   dimH(svgElement, tx1, tx2, yW, 'W', c);
 
-  // B: 왼쪽 수직선 (두 GND 사이 유전체 전체)
   dimV(svgElement, LX - 22, yTopGndBot, yBotGndTop, 'B', c, 'left');
 
-  // T: 트레이스 오른쪽
   const xT = Math.min(tx2 + 22, RX - 6);
-  if (T_px >= 14) {
+  if (T_px >= 10) {
     dimV(svgElement, xT, yTracTop, yTracBot, 'T', c, 'right');
   } else {
     thinLeader(svgElement, tx2 + 3, yMid, xT, 'T', c);
