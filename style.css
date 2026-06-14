@@ -149,21 +149,200 @@ body {
   padding: 16px;
   min-height: 200px;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
 }
 
 /* 단면도 패널은 약간 더 높게 */
 #cross-section {
   min-height: 280px;
+  align-items: center;
+  justify-content: center;
 }
 
 /* placeholder 안내 텍스트 */
 .panel-placeholder {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: var(--placeholder-text);
   font-size: 13px;
   text-align: center;
   user-select: none;
+}
+
+/* ── 단위 토글 ── */
+.unit-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.unit-toggle-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.unit-btn-group {
+  display: flex;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.unit-btn {
+  padding: 3px 12px;
+  border: none;
+  background: var(--tab-bg);
+  color: var(--text-muted);
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+
+.unit-btn + .unit-btn {
+  border-left: 1px solid var(--border-color);
+}
+
+.unit-btn.active {
+  background: var(--accent-color);
+  color: #fff;
+  font-weight: 600;
+}
+
+/* ── 입력 필드 행 ── */
+.field-row {
+  margin-bottom: 12px;
+}
+
+.field-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.field-label {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.field-symbol {
+  font-size: 13px;
+  font-weight: 700;
+  font-family: 'Courier New', 'Consolas', monospace;
+  color: var(--accent-color);
+}
+
+.field-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.field-cur {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-color);
+  font-family: 'Courier New', 'Consolas', monospace;
+  min-width: 76px;
+  text-align: right;
+}
+
+.field-inputs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.field-slider {
+  flex: 1;
+  height: 4px;
+  cursor: pointer;
+  accent-color: var(--accent-color);
+}
+
+.field-num {
+  width: 70px;
+  padding: 3px 6px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: var(--surface-color);
+  color: var(--text-color);
+  font-size: 12px;
+  font-family: 'Courier New', 'Consolas', monospace;
+  text-align: right;
+  transition: border-color 0.12s;
+}
+
+.field-num:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-color) 20%, transparent);
+}
+
+/* ── 결과 패널 ── */
+.result-content {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.result-formula {
+  font-size: 11px;
+  color: var(--text-muted);
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.result-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.result-label {
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.result-val {
+  font-size: 16px;
+  font-weight: 700;
+  font-family: 'Courier New', 'Consolas', monospace;
+  color: var(--accent-color);
+  white-space: nowrap;
+}
+
+.range-warning {
+  font-size: 12px;
+  color: #c0651a;
+  background: rgba(192, 101, 26, 0.08);
+  border: 1px solid rgba(192, 101, 26, 0.25);
+  border-radius: 4px;
+  padding: 7px 10px;
+  line-height: 1.4;
+}
+
+@media (prefers-color-scheme: dark) {
+  .range-warning {
+    color: #f4a261;
+    background: rgba(244, 162, 97, 0.08);
+    border-color: rgba(244, 162, 97, 0.25);
+  }
 }
 
 /* ── 반응형: 768px 이하 → 세로 스택 ── */
