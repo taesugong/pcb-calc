@@ -1,34 +1,34 @@
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
-// ── ViewBox / 레이아웃 상수 ───────────────────────────────
+// ── ViewBox / layout constants ─────────────────────────
 const VB_W = 420;
 const VB_H = 260;
-const LX   = 72;                      // 그림 왼쪽 경계 (H/B 라벨 공간)
-const RX   = 372;                      // 그림 오른쪽 경계
-const BY   = 240;                      // GND 하단 y
-const CX   = (LX + RX) / 2;           // 222, 수평 중심
-const GND_H      = 20;                 // GND 플레인 고정 높이 (px)
-const DIEL_H_MAX = 130;                // 유전체에 할당된 최대 시각 높이 (px)
-const MAX_W_PX   = (RX - LX) * 0.70;  // 트레이스 최대 너비 (≈210 px)
+const LX   = 72;                      // figure left boundary (space for H/B labels)
+const RX   = 372;                      // figure right boundary
+const BY   = 240;                      // GND bottom y
+const CX   = (LX + RX) / 2;           // 222, horizontal center
+const GND_H      = 20;                 // fixed GND plane height (px)
+const DIEL_H_MAX = 130;                // max visual height allotted to dielectric (px)
+const MAX_W_PX   = (RX - LX) * 0.70;  // max trace width (≈210 px)
 
-// ── 고정 스케일 (FIELDS 슬라이더 max와 일치해야 함) ──────
-// 현재 입력값이 아닌 슬라이더 전체 범위를 기준으로 삼아
-// 가로/세로 축이 서로 영향을 주지 않도록 분리한다.
-const W_MAX = 50;    // mil — Microstrip · Stripline 공통
+// ── Fixed scale (must match FIELDS slider max) ──────────
+// Based on the full slider range rather than the current
+// input value, so horizontal/vertical axes don't affect each other.
+const W_MAX = 50;    // mil — shared by Microstrip and Stripline
 const H_MAX = 50;    // mil — Microstrip H
 const B_MAX = 100;   // mil — Stripline B
-const T_MAX = 3;     // mil — 공통
+const T_MAX = 4.5;  // mil — shared
 
-// 가로 scale: MAX_W_PX / W_MAX  (≈ 4.2 px/mil)
+// Horizontal scale: MAX_W_PX / W_MAX  (≈ 4.2 px/mil)
 const SCALE_X = MAX_W_PX / W_MAX;
 
-// 세로 scale — Microstrip: DIEL_H_MAX / (H_MAX + T_MAX)  (≈ 2.45 px/mil)
+// Vertical scale — Microstrip: DIEL_H_MAX / (H_MAX + T_MAX)  (≈ 2.45 px/mil)
 const SCALE_Y_MS = DIEL_H_MAX / (H_MAX + T_MAX);
 
-// 세로 scale — Stripline: DIEL_H_MAX / B_MAX  (T는 B 내부에 포함)  (= 1.3 px/mil)
+// Vertical scale — Stripline: DIEL_H_MAX / B_MAX  (T is included within B)  (= 1.3 px/mil)
 const SCALE_Y_SL = DIEL_H_MAX / B_MAX;
 
-// ── SVG 요소 생성 헬퍼 ────────────────────────────────────
+// ── SVG element creation helper ──────────────────────────
 
 function e(tag, attrs = {}) {
   const el = document.createElementNS(SVG_NS, tag);
@@ -36,7 +36,7 @@ function e(tag, attrs = {}) {
   return el;
 }
 
-// ── 색상 팔레트 (다크모드 자동 감지) ────────────────────
+// ── Color palette (auto dark-mode detection) ─────────────
 
 function palette() {
   const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -54,7 +54,7 @@ function palette() {
   };
 }
 
-// ── SVG 초기화 ────────────────────────────────────────────
+// ── SVG initialization ───────────────────────────────────
 
 function initSVG(svg) {
   svg.setAttribute('viewBox', `0 0 ${VB_W} ${VB_H}`);
@@ -63,7 +63,7 @@ function initSVG(svg) {
   while (svg.firstChild) svg.removeChild(svg.firstChild);
 }
 
-// ── Defs: 화살표 마커 + GND 해칭 패턴 ────────────────────
+// ── Defs: arrow markers + GND hatch pattern ──────────────
 
 function addDefs(svg, c) {
   const defs = e('defs');
@@ -93,7 +93,7 @@ function addDefs(svg, c) {
   svg.appendChild(defs);
 }
 
-// ── 레이어 드로잉 ─────────────────────────────────────────
+// ── Layer drawing ────────────────────────────────────────
 
 function drawGND(svg, x, y, w, h, c) {
   svg.appendChild(e('rect', { x, y, width: w, height: h, fill: c.gnd }));
@@ -143,7 +143,7 @@ function drawSubLabel(svg, x, y, c) {
   svg.appendChild(t);
 }
 
-// ── 치수선 ────────────────────────────────────────────────
+// ── Dimension lines ──────────────────────────────────────
 
 function dimH(svg, x1, x2, y, label, c) {
   const T = 6;
@@ -186,7 +186,7 @@ function dimV(svg, x, y1, y2, label, c, side = 'left') {
   svg.appendChild(t);
 }
 
-// T가 너무 얇아 수직 치수선을 그리기 어려울 때 사용하는 리더 라벨
+// Leader label used when T is too thin to draw a vertical dimension line
 function thinLeader(svg, fromX, atY, toX, label, c) {
   svg.appendChild(e('line', {
     x1: fromX, y1: atY, x2: toX - 2, y2: atY,
@@ -203,22 +203,22 @@ function thinLeader(svg, fromX, atY, toX, label, c) {
   svg.appendChild(t);
 }
 
-// ── 공개 API ──────────────────────────────────────────────
+// ── Public API ────────────────────────────────────────────
 
 /**
- * Microstrip 단면도를 SVG 요소에 그린다.
+ * Draws the Microstrip cross-section on an SVG element.
  * @param {SVGSVGElement} svgElement
- * @param {{ W: number, H: number, T: number }} params  (단위: mil)
+ * @param {{ W: number, H: number, T: number }} params  (unit: mil)
  */
 export function drawMicrostrip(svgElement, { W, H, T }) {
   initSVG(svgElement);
   const c = palette();
   addDefs(svgElement, c);
 
-  // 가로(W)와 세로(H, T)는 독립 스케일 — 한 축을 바꿔도 다른 축 크기가 변하지 않는다
-  const W_px = Math.max(W * SCALE_X,    8);  // 시각적 최소 너비 보장
+  // W (horizontal) and H/T (vertical) use independent scales — changing one axis doesn't affect the other
+  const W_px = Math.max(W * SCALE_X,    8);  // ensure minimum visual width
   const H_px = H * SCALE_Y_MS;
-  const T_px = Math.max(T * SCALE_Y_MS, 4);  // 시각적 최소 두께 보장
+  const T_px = Math.max(T * SCALE_Y_MS, 4);  // ensure minimum visual thickness
 
   const yGndBot  = BY;
   const yGndTop  = yGndBot - GND_H;
@@ -248,16 +248,16 @@ export function drawMicrostrip(svgElement, { W, H, T }) {
 }
 
 /**
- * Symmetric Stripline 단면도를 SVG 요소에 그린다.
+ * Draws the Symmetric Stripline cross-section on an SVG element.
  * @param {SVGSVGElement} svgElement
- * @param {{ W: number, B: number, T: number }} params  (단위: mil)
+ * @param {{ W: number, B: number, T: number }} params  (unit: mil)
  */
 export function drawStripline(svgElement, { W, B, T }) {
   initSVG(svgElement);
   const c = palette();
   addDefs(svgElement, c);
 
-  // 가로(W)와 세로(B, T)는 독립 스케일 — 한 축을 바꿔도 다른 축 크기가 변하지 않는다
+  // W (horizontal) and B/T (vertical) use independent scales — changing one axis doesn't affect the other
   const W_px = Math.max(W * SCALE_X,    8);
   const B_px = B * SCALE_Y_SL;
   const T_px = Math.max(T * SCALE_Y_SL, 4);

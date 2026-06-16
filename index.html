@@ -1,53 +1,53 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PCB 임피던스 계산기</title>
+  <title>PCB Impedance Calculator</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="app-wrapper">
 
     <header class="app-header">
-      <h1 class="app-title">PCB 임피던스 계산기</h1>
+      <h1 class="app-title">PCB Impedance Calculator</h1>
     </header>
 
-    <nav class="tab-bar" role="tablist" aria-label="전송선로 구조 선택">
+    <nav class="tab-bar" role="tablist" aria-label="Transmission line structure selection">
       <button class="tab-btn active" role="tab" aria-selected="true"  data-type="microstrip">Microstrip</button>
       <button class="tab-btn"        role="tab" aria-selected="false" data-type="stripline">Stripline</button>
       <button class="tab-btn disabled" role="tab" aria-selected="false" aria-disabled="true" disabled data-type="cpwg"
-              title="Phase 2에서 지원 예정">
-        CPWG <span class="badge-soon">추후 지원</span>
+              title="Coming in Phase 2">
+        CPWG <span class="badge-soon">Coming soon</span>
       </button>
       <button class="tab-btn disabled" role="tab" aria-selected="false" aria-disabled="true" disabled data-type="cpw"
-              title="Phase 2에서 지원 예정">
-        CPW <span class="badge-soon">추후 지원</span>
+              title="Coming in Phase 2">
+        CPW <span class="badge-soon">Coming soon</span>
       </button>
       <button class="tab-btn disabled" role="tab" aria-selected="false" aria-disabled="true" disabled data-type="cps"
-              title="Phase 2에서 지원 예정">
-        CPS <span class="badge-soon">추후 지원</span>
+              title="Coming in Phase 2">
+        CPS <span class="badge-soon">Coming soon</span>
       </button>
     </nav>
 
     <main class="main-grid">
 
-      <section id="input-panel" class="panel" aria-label="입력 영역">
-        <p class="panel-placeholder">입력 영역 (placeholder)</p>
+      <section id="input-panel" class="panel" aria-label="Input area">
+        <p class="panel-placeholder">Input area (placeholder)</p>
       </section>
 
-      <section id="cross-section" class="panel" aria-label="단면도 시각화">
-        <p class="panel-placeholder">단면도 시각화 (placeholder)</p>
+      <section id="cross-section" class="panel" aria-label="Cross-section visualization">
+        <p class="panel-placeholder">Cross-section visualization (placeholder)</p>
       </section>
 
-      <section id="result-panel" class="panel" aria-label="계산 결과">
-        <p class="panel-placeholder">결과 영역 (placeholder)</p>
+      <section id="result-panel" class="panel" aria-label="Calculation result">
+        <p class="panel-placeholder">Result area (placeholder)</p>
       </section>
 
     </main>
 
     <footer class="app-footer">
-      <p>본 계산기는 공학적 근사식(IPC-2141A)을 사용합니다. 실제 임피던스는 제조 공차 등에 따라 달라질 수 있으며, 정밀 설계 시 필드 솔버 검증을 권장합니다.</p>
+      <p>This calculator uses engineering approximation formulas (IPC-2141A). Actual impedance may vary due to manufacturing tolerances and other factors; field-solver verification is recommended for precision design.</p>
     </footer>
 
   </div>

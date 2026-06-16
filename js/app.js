@@ -1,52 +1,73 @@
-import { calcMicrostrip, calcStripline, milToMm, mmToMil } from './formulas.js';
+import { calcMicrostrip, calcStripline, milToMm, mmToMil, ozToMil } from './formulas.js';
 import { drawMicrostrip, drawStripline } from './crosssection.js';
 
-// ── 상태 ──────────────────────────────────────────────────
+// ── State ─────────────────────────────────────────────────
 const state = {
   type: 'microstrip',
   unit: 'mil',
-  // 내부값은 항상 mil로 보관
+  // Internal values are always stored in mil
   vals: {
     microstrip: { W: 10,  H: 5,  T: 1.4, er: 4.3 },
     stripline:  { W: 8,   B: 20, T: 1.4, er: 4.3 },
   },
 };
 
-// ── 필드 정의 (범위는 mil 기준) ──────────────────────────
-const FIELDS = {
-  microstrip: [
-    { key: 'W',  label: 'W',  desc: '선폭',          min: 1,   max: 50,  step: 0.5, hasDim: true  },
-    { key: 'H',  label: 'H',  desc: '유전체 두께',    min: 1,   max: 50,  step: 0.5, hasDim: true  },
-    { key: 'T',  label: 'T',  desc: '동박 두께',      min: 0.5, max: 3,   step: 0.1, hasDim: true  },
-    { key: 'er', label: 'εr', desc: '비유전율',       min: 2,   max: 10,  step: 0.1, hasDim: false },
+// ── Preset values (typical real-world constants) ─────────
+// er: typical dielectric constants for common PCB substrate materials
+// T:  typical copper foil thicknesses in oz (converted to mil for storage)
+const PRESETS = {
+  er: [
+    { label: 'FR-4',         value: 4.3  },
+    { label: 'FR-4 (HF)',    value: 3.8  },
+    { label: 'Rogers 4350B', value: 3.48 },
+    { label: 'Rogers 5880',  value: 2.2  },
+    { label: 'Polyimide',    value: 3.5  },
+    { label: 'Air/PTFE',     value: 2.1  },
   ],
-  stripline: [
-    { key: 'W',  label: 'W',  desc: '선폭',          min: 1,   max: 50,  step: 0.5, hasDim: true  },
-    { key: 'B',  label: 'B',  desc: '유전체 총 두께', min: 2,   max: 100, step: 0.5, hasDim: true  },
-    { key: 'T',  label: 'T',  desc: '동박 두께',      min: 0.5, max: 3,   step: 0.1, hasDim: true  },
-    { key: 'er', label: 'εr', desc: '비유전율',       min: 2,   max: 10,  step: 0.1, hasDim: false },
+  T: [
+    { label: '1/3 oz', value: ozToMil(1 / 3) },
+    { label: '1/2 oz', value: ozToMil(1 / 2) },
+    { label: '1 oz',   value: ozToMil(1)     },
+    { label: '2 oz',   value: ozToMil(2)     },
+    { label: '3 oz',   value: ozToMil(3)     },
   ],
 };
 
-// ── 단위 헬퍼 ─────────────────────────────────────────────
+// ── Field definitions (ranges are in mil) ────────────────
+const FIELDS = {
+  microstrip: [
+    { key: 'W',  label: 'W',  desc: 'Trace width',        min: 1,   max: 50,  step: 0.5, hasDim: true  },
+    { key: 'H',  label: 'H',  desc: 'Dielectric height',  min: 1,   max: 50,  step: 0.5, hasDim: true  },
+    { key: 'T',  label: 'T',  desc: 'Copper thickness',   min: 0.3, max: 4.5, step: 0.1, hasDim: true,  presets: 'T'  },
+    { key: 'er', label: 'εr', desc: 'Dielectric constant', min: 2,  max: 10,  step: 0.1, hasDim: false, presets: 'er' },
+  ],
+  stripline: [
+    { key: 'W',  label: 'W',  desc: 'Trace width',        min: 1,   max: 50,  step: 0.5, hasDim: true  },
+    { key: 'B',  label: 'B',  desc: 'Total dielectric thickness', min: 2, max: 100, step: 0.5, hasDim: true },
+    { key: 'T',  label: 'T',  desc: 'Copper thickness',   min: 0.3, max: 4.5, step: 0.1, hasDim: true,  presets: 'T'  },
+    { key: 'er', label: 'εr', desc: 'Dielectric constant', min: 2,  max: 10,  step: 0.1, hasDim: false, presets: 'er' },
+  ],
+};
 
-// mil 내부값 → 표시값
+// ── Unit helpers ──────────────────────────────────────────
+
+// mil internal value → display value
 function toDisp(milValue, hasDim) {
   return hasDim && state.unit === 'mm' ? milToMm(milValue) : milValue;
 }
 
-// 표시값 → mil 내부값
+// display value → mil internal value
 function toMilInternal(dispValue, hasDim) {
   return hasDim && state.unit === 'mm' ? mmToMil(dispValue) : dispValue;
 }
 
-// 슬라이더/number 입력의 step (표시 단위 기준)
+// slider/number input step (in display unit)
 function dispStep(field) {
   if (!field.hasDim || state.unit === 'mil') return field.step;
   return parseFloat(milToMm(field.step).toFixed(4));
 }
 
-// 소수점 자리수: mil=1dp, mm=4dp, er=2dp
+// decimal places: mil=1dp, mm=4dp, er=2dp
 function fmt(val, hasDim) {
   if (!hasDim) return val.toFixed(2);
   return state.unit === 'mm' ? val.toFixed(4) : val.toFixed(1);
@@ -56,7 +77,7 @@ function unitSuffix(hasDim) {
   return hasDim ? ` ${state.unit}` : '';
 }
 
-// ── SVG 참조 (초기화 시 한 번 생성) ──────────────────────
+// ── SVG reference (created once on init) ─────────────────
 let crossSVG = null;
 
 function initCrossSection() {
@@ -76,7 +97,7 @@ function updateCrossSection() {
   }
 }
 
-// ── 계산 ─────────────────────────────────────────────────
+// ── Calculation ───────────────────────────────────────────
 
 function calculate() {
   const v = state.vals[state.type];
@@ -87,7 +108,7 @@ function calculate() {
   updateCrossSection();
 }
 
-// ── 결과 렌더링 ───────────────────────────────────────────
+// ── Result rendering ──────────────────────────────────────
 
 function renderResult(r) {
   const panel = document.getElementById('result-panel');
@@ -99,14 +120,14 @@ function renderResult(r) {
   const warningBadge = r.isValidRange ? '' : `
     <div class="result-warning" role="alert">
       <span class="result-warning-icon">⚠</span>
-      <span>입력값이 유효 범위를 벗어났습니다 — 참고용으로만 사용하세요</span>
+      <span>Input is outside the valid range — use for reference only</span>
     </div>`;
 
   panel.innerHTML = `
     <div class="result-content">
       ${warningBadge}
       <div class="result-z0-block">
-        <div class="result-z0-label">특성 임피던스 Z₀</div>
+        <div class="result-z0-label">Characteristic Impedance Z₀</div>
         <div class="result-z0-value">${r.Z0.toFixed(1)}<span class="result-z0-unit"> Ω</span></div>
       </div>
       <div class="result-secondary">
@@ -120,12 +141,12 @@ function renderResult(r) {
         </div>
       </div>
       <div class="result-formula-name">${r.formulaName}</div>
-      <button class="result-copy-btn" data-copy="${copyText}">결과 복사</button>
+      <button class="result-copy-btn" data-copy="${copyText}">Copy result</button>
     </div>
   `;
 }
 
-// ── 클립보드 복사 (이벤트 위임) ──────────────────────────
+// ── Clipboard copy (event delegation) ─────────────────────
 
 function initResultPanel() {
   document.getElementById('result-panel').addEventListener('click', (ev) => {
@@ -133,7 +154,7 @@ function initResultPanel() {
     if (!btn) return;
     navigator.clipboard.writeText(btn.dataset.copy).then(() => {
       const orig = btn.textContent;
-      btn.textContent = '복사됨!';
+      btn.textContent = 'Copied!';
       btn.classList.add('copied');
       setTimeout(() => {
         btn.textContent = orig;
@@ -143,18 +164,18 @@ function initResultPanel() {
   });
 }
 
-// ── 입력 패널 렌더링 ──────────────────────────────────────
+// ── Input panel rendering ─────────────────────────────────
 
 function renderInputPanel() {
   const panel = document.getElementById('input-panel');
   panel.innerHTML = '';
 
-  // 단위 토글
+  // Unit toggle
   const unitRow = document.createElement('div');
   unitRow.className = 'unit-toggle-row';
   unitRow.innerHTML = `
-    <span class="unit-toggle-label">표시 단위</span>
-    <div class="unit-btn-group" role="group" aria-label="단위 선택">
+    <span class="unit-toggle-label">Display unit</span>
+    <div class="unit-btn-group" role="group" aria-label="Select unit">
       <button class="unit-btn${state.unit === 'mil' ? ' active' : ''}" data-unit="mil">mil</button>
       <button class="unit-btn${state.unit === 'mm'  ? ' active' : ''}" data-unit="mm">mm</button>
     </div>
@@ -163,12 +184,12 @@ function renderInputPanel() {
     btn.addEventListener('click', () => {
       if (state.unit === btn.dataset.unit) return;
       state.unit = btn.dataset.unit;
-      renderInputPanel(); // 표시 단위만 바뀌므로 재계산 불필요
+      renderInputPanel(); // only the display unit changes, no recalculation needed
     });
   });
   panel.appendChild(unitRow);
 
-  // 파라미터 필드
+  // Parameter fields
   FIELDS[state.type].forEach(field => {
     const milCur = state.vals[state.type][field.key];
     const dCur   = toDisp(milCur, field.hasDim);
@@ -192,7 +213,7 @@ function renderInputPanel() {
           aria-label="${field.desc}">
         <input type="number" id="num-${field.key}" class="field-num"
           min="${dMin}" max="${dMax}" step="${dStep}" value="${fmt(dCur, field.hasDim)}"
-          aria-label="${field.desc} 숫자 입력">
+          aria-label="${field.desc} numeric input">
         <span class="field-unit-tag" aria-hidden="true">${field.hasDim ? state.unit : ''}</span>
       </div>
     `;
@@ -201,9 +222,12 @@ function renderInputPanel() {
     const numEl  = row.querySelector(`#num-${field.key}`);
     const curEl  = row.querySelector(`#cur-${field.key}`);
 
+    let presetRow = null;
+
     const commit = (dv) => {
       state.vals[state.type][field.key] = toMilInternal(dv, field.hasDim);
       curEl.textContent = fmt(dv, field.hasDim) + unitSuffix(field.hasDim);
+      if (presetRow) syncPresetActiveState(presetRow, field);
       calculate();
     };
 
@@ -222,10 +246,49 @@ function renderInputPanel() {
     });
 
     panel.appendChild(row);
+
+    // Preset chips (typical real-world constants for this field)
+    if (field.presets) {
+      presetRow = document.createElement('div');
+      presetRow.className = 'field-presets';
+      presetRow.setAttribute('role', 'group');
+      presetRow.setAttribute('aria-label', `${field.desc} presets`);
+
+      PRESETS[field.presets].forEach(p => {
+        const chip = document.createElement('button');
+        chip.type = 'button';
+        chip.className = 'preset-chip';
+        chip.textContent = p.label;
+        chip.dataset.value = p.value; // always stored in mil (T) or as-is (er)
+
+        chip.addEventListener('click', () => {
+          const dv = toDisp(p.value, field.hasDim);
+          const clampedDv = Math.min(Math.max(dv, dMin), dMax);
+          slider.value = clampedDv;
+          numEl.value = fmt(clampedDv, field.hasDim);
+          commit(clampedDv);
+        });
+
+        presetRow.appendChild(chip);
+      });
+
+      panel.appendChild(presetRow);
+      syncPresetActiveState(presetRow, field);
+    }
   });
 }
 
-// ── 탭 초기화 ─────────────────────────────────────────────
+// Highlights the preset chip matching the current value (if any)
+function syncPresetActiveState(presetRow, field) {
+  const milCur = state.vals[state.type][field.key];
+  const EPS = 1e-3;
+  presetRow.querySelectorAll('.preset-chip').forEach(chip => {
+    const chipVal = parseFloat(chip.dataset.value);
+    chip.classList.toggle('active', Math.abs(chipVal - milCur) < EPS);
+  });
+}
+
+// ── Tab initialization ─────────────────────────────────────
 
 function initTabs() {
   document.querySelectorAll('.tab-btn:not([disabled])').forEach(btn => {
@@ -243,7 +306,7 @@ function initTabs() {
   });
 }
 
-// ── 진입점 ───────────────────────────────────────────────
+// ── Entry point ─────────────────────────────────────────────
 
 initTabs();
 initCrossSection();
