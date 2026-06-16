@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Get-Process *)",
+      "PowerShell(Start-Process -WindowStyle Hidden python -ArgumentList \"-m\", \"http.server\", \"5555\" -WorkingDirectory \"C:\\\\Users\\\\gongt\\\\Desktop\\\\VibeCoding\\\\0_PCB_calc\\\\pcb-calc\"; Start-Sleep -Seconds 2; try { \\(Invoke-WebRequest -Uri \"http://localhost:5555/\" -UseBasicParsing -TimeoutSec 3\\).StatusCode } catch { \"failed\" })",
+      "PowerShell(python \"C:\\\\Users\\\\gongt\\\\AppData\\\\Local\\\\Temp\\\\verify_align.py\" 2>&1)",
+      "PowerShell(python \"C:\\\\Users\\\\gongt\\\\AppData\\\\Local\\\\Temp\\\\verify_align2.py\" 2>&1)"
+    ]
+  }
+}

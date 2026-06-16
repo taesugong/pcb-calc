@@ -17,6 +17,7 @@ const MAX_W_PX   = (RX - LX) * 0.70;  // max trace width (≈210 px)
 const W_MAX = 50;    // mil — shared by Microstrip and Stripline
 const H_MAX = 50;    // mil — Microstrip H
 const B_MAX = 100;   // mil — Stripline B
+const T_MIN = 0.3;  // mil — copper thickness slider minimum
 const T_MAX = 4.5;  // mil — shared
 
 // Horizontal scale: MAX_W_PX / W_MAX  (≈ 4.2 px/mil)
@@ -27,6 +28,20 @@ const SCALE_Y_MS = DIEL_H_MAX / (H_MAX + T_MAX);
 
 // Vertical scale — Stripline: DIEL_H_MAX / B_MAX  (T is included within B)  (= 1.3 px/mil)
 const SCALE_Y_SL = DIEL_H_MAX / B_MAX;
+
+// ── Copper thickness independent scale ───────────────────
+// T range (T_MIN–T_MAX mil) is too small for SCALE_Y_MS/SL to show visible change.
+// Map T linearly to T_PX_MIN–T_PX_MAX so even thin copper is visible.
+const T_PX_MIN = 4;   // px at T_MIN
+const T_PX_MAX = 24;  // px at T_MAX
+
+// maxBpx: optional Stripline B_px — clamps T_px to 40% of B_px to avoid GND overlap
+function scaleTpx(T, maxBpx = Infinity) {
+  const ratio = (T - T_MIN) / (T_MAX - T_MIN);
+  const raw   = T_PX_MIN + ratio * (T_PX_MAX - T_PX_MIN);
+  const cap   = maxBpx * 0.40;
+  return Math.min(Math.max(raw, T_PX_MIN), cap);
+}
 
 // ── SVG element creation helper ──────────────────────────
 
@@ -216,9 +231,9 @@ export function drawMicrostrip(svgElement, { W, H, T }) {
   addDefs(svgElement, c);
 
   // W (horizontal) and H/T (vertical) use independent scales — changing one axis doesn't affect the other
-  const W_px = Math.max(W * SCALE_X,    8);  // ensure minimum visual width
+  const W_px = Math.max(W * SCALE_X, 8);  // ensure minimum visual width
   const H_px = H * SCALE_Y_MS;
-  const T_px = Math.max(T * SCALE_Y_MS, 4);  // ensure minimum visual thickness
+  const T_px = scaleTpx(T);               // T uses its own linear scale for visible change
 
   const yGndBot  = BY;
   const yGndTop  = yGndBot - GND_H;
@@ -258,9 +273,9 @@ export function drawStripline(svgElement, { W, B, T }) {
   addDefs(svgElement, c);
 
   // W (horizontal) and B/T (vertical) use independent scales — changing one axis doesn't affect the other
-  const W_px = Math.max(W * SCALE_X,    8);
+  const W_px = Math.max(W * SCALE_X, 8);
   const B_px = B * SCALE_Y_SL;
-  const T_px = Math.max(T * SCALE_Y_SL, 4);
+  const T_px = scaleTpx(T, B_px);  // T uses its own linear scale; clamped to 40% of B_px
 
   const yBotGndBot = BY;
   const yBotGndTop = yBotGndBot - GND_H;
